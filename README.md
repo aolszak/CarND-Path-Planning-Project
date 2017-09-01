@@ -39,11 +39,11 @@ After deciding about the behaviour and optional lane change, smooth drive path t
 
 I was able to meet requirements with a reserver and the car was able to drive on a highway for nearly 15 miles without accidents and exceeding speed and acceleration thresholds. 
 
-<center>![Planner in action](readme/track.png)</center>
+![Planner in action](./readme/track.png)
 
 The car had to face different road situations and was performing quite well. The counter was resetted because of too long staying in the same lane, so it could still continue driving without accident. Here'a the screencast.
 
-<center>[![Path Planner Screencast](readme/vimeo.png)](https://vimeo.com/231506718 "Path Planner Screencast")</center>
+[![Path Planner Screencast](./readme/vimeo.png)](https://vimeo.com/231506718 "Path Planner Screencast")
 
 ### Conclusion
 
