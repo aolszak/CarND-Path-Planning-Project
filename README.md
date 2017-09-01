@@ -1,9 +1,57 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
+
+### Introduction
+
+In this project my goal was to navigate safely a car on a virtual highway. There were given track coordinates and sensor fusion data about other vehicles. 
+
+The car had to drive without any accident for at least 4.32 miles, do not exceed speed limit of 50 MPH, do not exceed max acceleration and jerk rates, not make any collisions, stay in the lane and be able to change them in a smooth way.
+
+### Implemented Solution
+
+Main idea used for this project was development of Finite State Machine algorithm which could make decisions in dynamic environment. There are 3 main steps in code which I have implemented in order to separate logically different aspects of the planner:
+
+1. Sensor fusion data analysis - to generate higher level informations about serrounding vehicles and future predictions about them.
+
+2. Behaviour planning - to decide how to behave in order to drive safely, meet thresholds and pass other vehicles.
+
+3. Calculate driving trajectory for changing the lanes in a smooth way.
+
+Whole solution was implemented in one class named "PathPlanner". All parameters where defined as constant variables to give clear overview what could be tweaked in order to change behaviour of the planner. The planner is used in the code template from Udacity in just few lines in the "main.cpp" file.
+
+Planner is initialised once, variables describing track are set and the object is passed to the "onMessage" method. Planner's instance method "getNextWayPoints" is invoked to plan next way points in map's coordinates for the next 0.02s. In every invoked call data about the vehicle state, sensor fusion data (other vehicles) and previous path is passed.
+
+The incoming data is used to calculate speed and relative positions of other vehicles based on velocity for X and Y axis, and Frenet coordinates. Based on those values I was able to clearly assume few important facts e.g. is current lane free or blocked by other vehicle, is left or right lane available for turning, which lane is better for turning. In order to improve planning, future value of S coordinate in Frenet system was calculated - this solution helped preventing from rare collisions with other vehicles.
+
+I had come up with few rational statements in order to pass by other vehicles and behave safely:
+
+- vehicle should stay and drive in the same lane if it's free
+- vehicle should change lane if current lane is blocked
+- vehicle should change lane only if there is no car on a side and the space for turning is enough safe
+- if other lanes are blocked in close distance, vehicle should follow fastest vehicle with similar speed
+- if other lanes are blocked in long distance, vehicle should choose lane, which have an other vehicle in longer distance
+
+This logic was used in behaviour planning step starting from line 133 in "PathPlanner.cpp" file.
+
+After deciding about the behaviour and optional lane change, smooth drive path trajectory was calculated. A really helpful resource for creating smooth trajectories was using, the [spline function](http://kluge.in-chemnitz.de/opensource/spline/) is in a single hearder file. Trajectory calculation starts from line 217 in the "PathPlanner.cpp" file. The smooth spline path was generated from delivered previous path points and calculated 3 points ahead with distance of 30, 60 and 90 meters. Using generated spline I was able to get coordinates with great accuracy in every calculation step to ensure smooth lane transition. Final step was to transform points from Frenet to the map coordinates system and push them back as raw coordinate values outside the planner.
+
+### Results
+
+I was able to meet requirements with a reserver and the car was able to drive on a highway for nearly 15 miles without accidents and exceeding speed and acceleration thresholds. 
+
+<center>![Planner in action](./readme/track.png)</center>
+
+The car had to face different road situations and was performing quite well. The counter was resetted because of too long staying in the same lane, so it could still continue driving without accident. Here'a the screencast.
+
+<center>[![Path Planner Screencast](./readme/vimeo.png)](https://vimeo.com/231506718 "Path Planner Screencast")</center>
+
+### Conclusion
+
+I had to come a long way until getting to this fairly simple solution, and I think that this area of development is really interesting and challenging. I think my solution is a correct direction, but there is still many more scenarios to cover in order to drive in more efficient, faster and safer way. I will continue expanding my knowledge in this very interesting area.
    
 ### Simulator. You can download the Term3 Simulator BETA which contains the Path Planning Project from the [releases tab](https://github.com/udacity/self-driving-car-sim/releases).
 
-In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. You will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 50 m/s^3.
+In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. You will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one current_lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 50 m/s^3.
 
 #### The map of the highway is in data/highway_map.txt
 Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit normal vector pointing outward of the highway loop.
@@ -58,10 +106,6 @@ the path has processed since last time.
 
 2. There will be some latency between the simulator running and the path planner returning a path, with optimized code usually its not very long maybe just 1-3 time steps. During this delay the simulator will continue using points that it was last given, because of this its a good idea to store the last points you have used so you can have a smooth transition. previous_path_x, and previous_path_y can be helpful for this transition since they show the last points given to the simulator controller with the processed points already removed. You would either return a path that extends this previous path or make sure to create a new path that has a smooth transition with this last path.
 
-## Tips
-
-A really helpful resource for doing this project and creating smooth trajectories was using http://kluge.in-chemnitz.de/opensource/spline/, the spline function is in a single hearder file is really easy to use.
-
 ---
 
 ## Dependencies
@@ -84,51 +128,3 @@ A really helpful resource for doing this project and creating smooth trajectorie
     cd uWebSockets
     git checkout e94b6e1
     ```
-
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
-
-
-## Call for IDE Profiles Pull Requests
-
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
